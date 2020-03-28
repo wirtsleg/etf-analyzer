@@ -1,0 +1,17 @@
+server:
+  port: 8081
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    topics:
+      etf-info: etf.info
+      price: etf.price
+      dividend: etf.dividend
+    producer:
+      acks: all
+      retries: 3
+      linger-ms: 50
+      enable-idempotence: true
+      compression-type: snappy
+      batch-size: 32768
