@@ -1,0 +1,81 @@
+POST localhost:8083/connectors
+Content-Type: application/json
+
+{
+  "name": "hdfs-sink-prices",
+  "config": {
+    "connector.class": "io.confluent.connect.hdfs3.Hdfs3SinkConnector",
+    "tasks.max": "1",
+    "topics": "etf.price",
+    "hdfs.url": "hdfs://namenode:9000",
+    "schema.registry.url": "http://schemaregistry:8081",
+    "value.converter.schema.registry.url": "http://schemaregistry:8081",
+    "value.converter.value.subject.name.strategy": "io.confluent.kafka.serializers.subject.RecordNameStrategy",
+    "confluent.topic.bootstrap.servers": "http://broker:9092",
+    "flush.size": "3",
+    "name": "hdfs-sink-prices",
+    "format.class": "io.confluent.connect.hdfs3.parquet.ParquetFormat",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter"
+  }
+}
+
+###
+DELETE localhost:8083/connectors/hdfs-sink-prices
+Content-Type: application/json
+
+###
+POST localhost:8083/connectors
+Content-Type: application/json
+
+{
+  "name": "hdfs-sink-info",
+  "config": {
+    "connector.class": "io.confluent.connect.hdfs3.Hdfs3SinkConnector",
+    "tasks.max": "1",
+    "topics": "etf.info",
+    "hdfs.url": "hdfs://namenode:9000",
+    "schema.registry.url": "http://schemaregistry:8081",
+    "value.converter.schema.registry.url": "http://schemaregistry:8081",
+    "value.converter.value.subject.name.strategy": "io.confluent.kafka.serializers.subject.RecordNameStrategy",
+    "confluent.topic.bootstrap.servers": "http://broker:9092",
+    "flush.size": "3",
+    "name": "hdfs-sink-info",
+    "format.class": "io.confluent.connect.hdfs3.parquet.ParquetFormat",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter"
+  }
+}
+
+###
+DELETE localhost:8083/connectors/hdfs-sink-info
+Content-Type: application/json
+
+###
+POST localhost:8083/connectors
+Content-Type: application/json
+
+{
+  "name": "hdfs-sink-dividends",
+  "config": {
+    "connector.class": "io.confluent.connect.hdfs3.Hdfs3SinkConnector",
+    "tasks.max": "1",
+    "topics": "etf.dividend",
+    "hdfs.url": "hdfs://namenode:9000",
+    "schema.registry.url": "http://schemaregistry:8081",
+    "value.converter.schema.registry.url": "http://schemaregistry:8081",
+    "value.converter.value.subject.name.strategy": "io.confluent.kafka.serializers.subject.RecordNameStrategy",
+    "confluent.topic.bootstrap.servers": "http://broker:9092",
+    "flush.size": "3",
+    "name": "hdfs-sink-dividends",
+    "format.class": "io.confluent.connect.hdfs3.parquet.ParquetFormat",
+    "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+    "value.converter": "io.confluent.connect.avro.AvroConverter"
+  }
+}
+
+###
+DELETE localhost:8083/connectors/hdfs-sink-dividends
+Content-Type: application/json
+
+###
