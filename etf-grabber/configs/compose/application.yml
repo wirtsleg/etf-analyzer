@@ -1,10 +1,10 @@
 server:
-  port: 8082
+  port: 8081
 
 spring:
   kafka:
-    bootstrap-servers: localhost:9092
-    schema-registry: http://localhost:8011
+    bootstrap-servers: broker:9092
+    schema-registry: http://schemaregistry:8081
     topics:
       etf-info: etf.info
       price: etf.price

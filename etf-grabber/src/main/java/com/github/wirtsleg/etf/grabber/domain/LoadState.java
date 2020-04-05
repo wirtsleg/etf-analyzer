@@ -1,6 +1,6 @@
 package com.github.wirtsleg.etf.grabber.domain;
 
-import lombok.Data;
+import com.github.wirtsleg.etf.grabber.domain.avro.Etf;
 import lombok.Getter;
 
 import java.util.List;

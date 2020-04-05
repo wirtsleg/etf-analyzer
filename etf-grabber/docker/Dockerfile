@@ -13,4 +13,4 @@ COPY $APP_NAME.jar /app/$APP_NAME.jar
 WORKDIR /app
 
 CMD java $JAVA_OPTS $JMX_OPTS -jar /app/$APP_NAME.jar \
-    --spring.config.location=file:/app/application.yml
+    --spring.config.location=file:/app/configs/application.yml

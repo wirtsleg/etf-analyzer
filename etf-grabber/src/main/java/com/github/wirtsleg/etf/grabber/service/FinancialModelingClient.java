@@ -1,8 +1,8 @@
 package com.github.wirtsleg.etf.grabber.service;
 
-import com.github.wirtsleg.etf.grabber.domain.Etf;
-import com.github.wirtsleg.etf.grabber.domain.HistoricalPrice;
-import com.github.wirtsleg.etf.grabber.domain.StockDividends;
+import com.github.wirtsleg.etf.grabber.domain.avro.Etf;
+import com.github.wirtsleg.etf.grabber.domain.avro.HistoricalPrice;
+import com.github.wirtsleg.etf.grabber.domain.avro.StockDividends;
 import feign.Param;
 import feign.RequestLine;
 

@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com.github.wirtsleg.etf'
-version = '0.0.1-SNAPSHOT'
+version = null
 sourceCompatibility = '14'
 
 configurations {
@@ -16,9 +16,12 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url "https://packages.confluent.io/maven/" }
 }
 
 dependencies {
+	implementation files('/home/alexandr/projects/otus/etf-analyzer/etf-domain/build/libs/etf-domain-1.0.0-SNAPSHOT.jar')
+
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.kafka:spring-kafka'
 
@@ -26,6 +29,10 @@ dependencies {
 	implementation 'io.github.openfeign:feign-jackson:10.4.0'
 	implementation 'io.github.openfeign:feign-slf4j:10.4.0'
 	implementation 'io.github.openfeign.form:feign-form-spring:3.8.0'
+
+	implementation 'org.springframework.kafka:spring-kafka'
+	implementation 'io.confluent:kafka-avro-serializer:5.4.0'
+	implementation 'org.apache.avro:avro:1.9.2'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

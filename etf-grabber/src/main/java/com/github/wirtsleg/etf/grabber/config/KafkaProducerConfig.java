@@ -1,6 +1,9 @@
 package com.github.wirtsleg.etf.grabber.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.confluent.kafka.serializers.AbstractKafkaAvroSerDeConfig;
+import io.confluent.kafka.serializers.KafkaAvroSerializer;
+import io.confluent.kafka.serializers.subject.RecordNameStrategy;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -29,13 +32,21 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.producer.enable-idempotence:false}")
     private Boolean enableIdempotence;
 
+    @Value("${spring.kafka.schema-registry:#{null}}")
+    private String schemaRegistryUrl;
+
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> props = new HashMap<>(kafkaProperties.buildProducerProperties());
         props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, enableIdempotence);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
+        props.put(AbstractKafkaAvroSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
+        props.put(AbstractKafkaAvroSerDeConfig.AUTO_REGISTER_SCHEMAS, true);
+        props.put(AbstractKafkaAvroSerDeConfig.VALUE_SUBJECT_NAME_STRATEGY, RecordNameStrategy.class.getName());
 
-        return new DefaultKafkaProducerFactory<>(props, new StringSerializer(), new JsonSerializer<>(objectMapper));
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean

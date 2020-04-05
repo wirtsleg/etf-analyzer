@@ -1,0 +1,11 @@
+{
+    "namespace": "com.github.wirtsleg.etf.grabber.domain.avro",
+    "type": "record",
+    "name": "StockDividends",
+    "fields": [
+        {"name": "symbol", "type": "string"},
+        {"name": "historical", "type": {
+           "type":"array", "items":"com.github.wirtsleg.etf.grabber.domain.avro.Dividend"
+        }}
+    ]
+}

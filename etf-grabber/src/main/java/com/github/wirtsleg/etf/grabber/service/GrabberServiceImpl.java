@@ -1,12 +1,12 @@
 package com.github.wirtsleg.etf.grabber.service;
 
 import com.github.wirtsleg.etf.grabber.config.TopicProps;
-import com.github.wirtsleg.etf.grabber.domain.Etf;
-import com.github.wirtsleg.etf.grabber.domain.HistoricalPrice;
+import com.github.wirtsleg.etf.grabber.domain.avro.Etf;
+import com.github.wirtsleg.etf.grabber.domain.avro.HistoricalPrice;
 import com.github.wirtsleg.etf.grabber.domain.LoadState;
 import com.github.wirtsleg.etf.grabber.domain.LoadState.Item;
 import com.github.wirtsleg.etf.grabber.domain.LoadState.Status;
-import com.github.wirtsleg.etf.grabber.domain.StockDividends;
+import com.github.wirtsleg.etf.grabber.domain.avro.StockDividends;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;

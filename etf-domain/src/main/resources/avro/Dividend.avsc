@@ -1,0 +1,10 @@
+{
+    "namespace": "com.github.wirtsleg.etf.grabber.domain.avro",
+    "type": "record",
+    "name": "Dividend",
+    "fields": [
+        {"name": "date", "type": "string"},
+        {"name": "label", "type": "string"},
+        {"name": "adjDividend", "type": "double"}
+    ]
+}

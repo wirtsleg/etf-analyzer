@@ -1,0 +1,12 @@
+{
+    "namespace": "com.github.wirtsleg.etf.grabber.domain.avro",
+    "type": "record",
+    "name": "Etf",
+    "fields": [
+        {"name": "symbol", "type": "string"},
+        {"name": "name", "type": ["null", "string"]},
+        {"name": "currency", "type": ["null", "string"]},
+        {"name": "stockExchange", "type": ["null", "string"]},
+        {"name": "exchangeShortName", "type": ["null", "string"]}
+    ]
+}

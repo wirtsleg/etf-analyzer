@@ -1,0 +1,20 @@
+{
+    "namespace": "com.github.wirtsleg.etf.grabber.domain.avro",
+    "type": "record",
+    "name": "Price",
+    "fields": [
+        {"name": "date", "type": "string"},
+        {"name": "open", "type": "double"},
+        {"name": "high", "type": "double"},
+        {"name": "low", "type": "double"},
+        {"name": "close", "type": "double"},
+        {"name": "adjClose", "type": "double"},
+        {"name": "volume", "type": "double"},
+        {"name": "unadjustedVolume", "type": "double"},
+        {"name": "change", "type": "double"},
+        {"name": "changePercent", "type": "double"},
+        {"name": "vwap", "type": "double"},
+        {"name": "label", "type": "string"},
+        {"name": "changeOverTime", "type": "double"}
+    ]
+}

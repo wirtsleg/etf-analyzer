@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+
+    // удаляем устаревшие сборки
+    options {
+        buildDiscarder logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '50', daysToKeepStr: '', numToKeepStr: '50')
+    }
+
+    stages {
+        stage('Build') {
+            agent {
+                docker {
+                    image "$DOCKER_GROUP_URL/gradle:5.3.0-jdk11"
+                    reuseNode true
+                }
+            }
+            steps {
+                sh 'gradle -Dorg.gradle.daemon=false clean build'
+            }
+
+        }
+
+        stage('Publish') {
+            agent {
+                docker {
+                    image "$DOCKER_GROUP_URL/gradle:5.3.0-jdk11"
+                    reuseNode true
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'ciuser_from_password_on_bin-repo.dev.ias.iac.spb.ru',
+                        usernameVariable: 'nexusUser', passwordVariable: 'nexusPassword')]) {
+                    withEnv(["NEXUS_USERNAME=${nexusUser}", "NEXUS_PASSWORD=${nexusPassword}"]) {
+                        sh 'gradle -Dorg.gradle.daemon=false publishSchema publish'
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sendNotifications(currentBuild.result)
+        }
+    }
+}

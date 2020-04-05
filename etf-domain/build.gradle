@@ -1,0 +1,99 @@
+import groovy.json.JsonSlurper
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "com.commercehub.gradle.plugin:gradle-avro-plugin:0.17.0"
+    }
+}
+
+group = 'com.github.wirtsleg.etf'
+version = '1.0.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.apache.avro:avro:1.9.2'
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:3.12.2'
+    testCompile 'commons-io:commons-io:2.6'
+}
+
+def avroDestination = new File(buildDir, "generated/avro")
+
+sourceSets {
+    main {
+        java {
+            srcDir avroDestination
+        }
+    }
+}
+
+task generateAvro(type: com.commercehub.gradle.plugin.avro.GenerateAvroJavaTask) {
+    source("src/main/resources/avro")
+    outputDir = avroDestination
+    fieldVisibility = "PRIVATE"
+}
+
+def checkPublishError(String output) {
+    def jsonSlurper = new JsonSlurper()
+    def responseJson = jsonSlurper.parseText(output)
+    if (responseJson.error_code != null) {
+        throw new RuntimeException(responseJson.message)
+    }
+}
+
+task publishEtf(type: Exec) {
+    dependsOn 'test'
+    commandLine 'bash', '-e', '-c', """
+			curl -X POST -H 'Content-Type: application/vnd.schemaregistry.v1+json' 'localhost:8011/subjects/com.github.wirtsleg.etf.grabber.domain.avro.Etf/versions' \\
+			-d '@json/Etf.json'"""
+    standardOutput new ByteArrayOutputStream()
+    doLast { checkPublishError(standardOutput.toString()) }
+}
+
+task publishHistoricalPrice(type: Exec) {
+    dependsOn 'test'
+    commandLine 'bash', '-e', '-c', """
+			curl -X POST -H 'Content-Type: application/vnd.schemaregistry.v1+json' 'localhost:8011/subjects/com.github.wirtsleg.etf.grabber.domain.avro.HistoricalPrice/versions' \\
+			-d '@json/HistoricalPrice.json' \\
+			-d '@json/Price.json'"""
+    standardOutput new ByteArrayOutputStream()
+    doLast { checkPublishError(standardOutput.toString()) }
+}
+
+task publishStockDividends(type: Exec) {
+    dependsOn 'test'
+    commandLine 'bash', '-e', '-c', """
+			curl -X POST -H 'Content-Type: application/vnd.schemaregistry.v1+json' 'localhost:8011/subjects/com.github.wirtsleg.etf.grabber.domain.avro.StockDividends/versions' \\
+			-d '@json/StockDividends.json' \\
+			-d '@json/Dividend.json'"""
+    standardOutput new ByteArrayOutputStream()
+	doLast { checkPublishError(standardOutput.toString()) }
+}
+
+task publishSchema() {
+    dependsOn 'publishEtf'
+    dependsOn 'publishHistoricalPrice'
+    dependsOn 'publishStockDividends'
+}
+
+task cleanJson(type: Delete) {
+    group 'build'
+    delete 'json'
+}
+
+compileJava {
+    dependsOn generateAvro
+}
+
+clean.dependsOn tasks.cleanJson
