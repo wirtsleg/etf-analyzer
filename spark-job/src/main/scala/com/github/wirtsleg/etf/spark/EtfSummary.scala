@@ -1,9 +1,11 @@
 package com.github.wirtsleg.etf.spark
 
+import java.net.URI
 import java.time.LocalDate
 
 import com.mongodb.spark._
 import com.mongodb.spark.config._
+import org.apache.hadoop.fs.{FileSystem, Path}
 import org.bson._
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.{SaveMode, SparkSession}
@@ -39,30 +41,38 @@ object EtfSummary {
     spark.sparkContext.setLogLevel("ERROR")
     import spark.implicits._
 
-    val etfPrices = spark.read.parquet("hdfs://namenode:9000/topics/etf.price/partition=0/etf.price+0+0000000000+0000000002.parquet")
+    val files = FileSystem.get(new URI("hdfs://namenode:9000"), spark.sparkContext.hadoopConfiguration)
+      .listFiles(new Path("/topics/etf.price/partition=0"), false)
 
-    val etfProfitByYear = etfPrices
-      .as[HistoricalPrices]
-      .flatMap(row =>
-        row.historical
-          .groupBy(price => LocalDate.parse(price.date).getYear)
-          .values
-          .map(yearPrices => {
-            val startPrice = yearPrices.minBy(_.date).open
-            val endPrice = yearPrices.maxBy(_.date).close
-            val year = LocalDate.parse(yearPrices(0).date).getYear
-            EtfYearResult(row.symbol, year, (endPrice - startPrice) / endPrice * 100)
-          })
-      )
+    while (files.hasNext) {
+      val filename = files.next().getPath.toString
+      println(s"Processing file: $filename")
 
-    etfProfitByYear.show()
+      val etfPrices = spark.read.parquet(filename)
 
-    val documents = etfProfitByYear
-      .groupBy($"symbol")
-      .avg("profitPercentage")
-      .withColumnRenamed("avg(profitPercentage)", "averageProfitPercentage")
-      .as[EtfOverallInfo]
+          val etfProfitByYear = etfPrices
+            .as[HistoricalPrices]
+            .flatMap(row =>
+              row.historical
+                .groupBy(price => LocalDate.parse(price.date).getYear)
+                .values
+                .map(yearPrices => {
+                  val startPrice = yearPrices.minBy(_.date).open
+                  val endPrice = yearPrices.maxBy(_.date).close
+                  val year = LocalDate.parse(yearPrices(0).date).getYear
+                  EtfYearResult(row.symbol, year, (endPrice - startPrice) / endPrice * 100)
+                })
+            )
 
-    MongoSpark.save(documents, WriteConfig(Map("uri" -> "mongodb://root:example@mongo:27017/etf.overall?authSource=admin")))
+          etfProfitByYear.show()
+
+          val documents = etfProfitByYear
+            .groupBy($"symbol")
+            .avg("profitPercentage")
+            .withColumnRenamed("avg(profitPercentage)", "averageProfitPercentage")
+            .as[EtfOverallInfo]
+
+          MongoSpark.save(documents, WriteConfig(Map("uri" -> "mongodb://root:example@mongo:27017/etf.overall?authSource=admin")))
+    }
   }
 }
