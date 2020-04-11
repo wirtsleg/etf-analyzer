@@ -4,6 +4,8 @@ volumes:
   hadoop_namenode:
   hadoop_datanode:
   hadoop_historyserver:
+  mongo:
+  metabase:
 
 services:
   namenode:
@@ -61,16 +63,21 @@ services:
       - ./hadoop.env
 
   spark-master:
-    image: bde2020/spark-master:2.1.0-hadoop2.8-hive-java8
+    image: bde2020/spark-master:2.4.4-hadoop2.7
     container_name: spark-master
     ports:
-      - 8080:8080
-      - 7077:7077
+      - "8080:8080"
+      - "7077:7077"
+      - "52022:22"
+    environment:
+      - PATH=/spark/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     env_file:
       - ./hadoop.env
+    volumes:
+      - ./spark-job/target/scala-2.11:/jobs
 
   spark-worker:
-    image: bde2020/spark-worker:2.1.0-hadoop2.8-hive-java8
+    image: bde2020/spark-worker:2.4.4-hadoop2.7
     depends_on:
       - spark-master
     environment:
@@ -151,8 +158,6 @@ services:
       CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: "1"
       CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: "1"
       CONNECT_PLUGIN_PATH: '/usr/share/confluent-hub-components'
-    volumes:
-      - ./connect/hdfs-sink.json:/connect/hdfs-sink.json
 
   control-center:
     image: confluentinc/cp-enterprise-control-center:5.3.1
@@ -174,6 +179,71 @@ services:
       CONTROL_CENTER_MONITORING_INTERCEPTOR_TOPIC_PARTITIONS: 1
       CONFLUENT_METRICS_TOPIC_REPLICATION: 1
       PORT: 9021
+
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  airflow:
+#    image: puckel/docker-airflow:1.10.9
+    image: kozhenkov/airflow-docker:latest
+    restart: always
+    depends_on:
+      - postgres
+    logging:
+      options:
+        max-size: 10m
+        max-file: "3"
+    volumes:
+      - ./dags:/usr/local/airflow/dags
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+      - /usr/bin/docker:/bin/docker:rw
+      - /usr/lib/x86_64-linux-gnu/libltdl.so.7:/usr/lib/x86_64-linux-gnu/libltdl.so.7:rw
+    ports:
+      - "7999:8080"
+    command: webserver
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: etf
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo:/data/db
+    command: mongod --auth
+
+  metabase-app:
+    image: metabase/metabase
+    restart: always
+    ports:
+      - 3001:3000
+    volumes:
+      - metabase:/metabase-data
+#    environment:
+#      MB_DB_TYPE: postgres
+#      MB_DB_DBNAME: metabase
+#      MB_DB_PORT: 5432
+#      MB_DB_USER: metabase
+#      MB_DB_PASS: postgres
+#      MB_DB_HOST: postgres-db
+    depends_on:
+      - mongo
 
   etf-grabber:
     image: kozhenkov/etf-grabber:latest
