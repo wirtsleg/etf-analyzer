@@ -28,7 +28,7 @@ case class Price(
                   changeOverTime: Double)
 
 case class EtfYearResult(symbol: String, year: Int, profitPercentage: Double)
-case class EtfOverallInfo(symbol: String, averageProfitPercentage: Double)
+case class EtfOverallInfo(_id: String, averageProfitPercentage: Double)
 
 object EtfSummary {
 
@@ -70,6 +70,7 @@ object EtfSummary {
             .groupBy($"symbol")
             .avg("profitPercentage")
             .withColumnRenamed("avg(profitPercentage)", "averageProfitPercentage")
+            .withColumnRenamed("symbol", "_id")
             .as[EtfOverallInfo]
 
           MongoSpark.save(documents, WriteConfig(Map("uri" -> "mongodb://root:example@mongo:27017/etf.overall?authSource=admin")))
