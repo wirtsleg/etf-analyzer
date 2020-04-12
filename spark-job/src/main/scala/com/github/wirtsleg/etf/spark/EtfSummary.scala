@@ -28,7 +28,14 @@ case class Price(
                   changeOverTime: Double)
 
 case class EtfYearResult(symbol: String, year: Int, profitPercentage: Double)
-case class EtfOverallInfo(_id: String, averageProfitPercentage: Double)
+
+case class EtfYearResults(_id: String, yearResults: List[YearResult])
+
+case class WrappedEtfYearResult(symbol: String, yearResult: YearResult)
+
+case class EtfOverallInfo(_id: String, averageProfitPercentage: Double, yearResults: List[YearResult])
+
+case class YearResult(year: Int, profitPercentage: Double)
 
 object EtfSummary {
 
@@ -50,30 +57,40 @@ object EtfSummary {
 
       val etfPrices = spark.read.parquet(filename)
 
-          val etfProfitByYear = etfPrices
-            .as[HistoricalPrices]
-            .flatMap(row =>
-              row.historical
-                .groupBy(price => LocalDate.parse(price.date).getYear)
-                .values
-                .map(yearPrices => {
-                  val startPrice = yearPrices.minBy(_.date).open
-                  val endPrice = yearPrices.maxBy(_.date).close
-                  val year = LocalDate.parse(yearPrices(0).date).getYear
-                  EtfYearResult(row.symbol, year, (endPrice - startPrice) / endPrice * 100)
-                })
-            )
+      val etfProfitByYear = etfPrices
+        .as[HistoricalPrices]
+        .flatMap(row =>
+          row.historical
+            .groupBy(price => LocalDate.parse(price.date).getYear)
+            .values
+            .map(yearPrices => {
+              val startPrice = yearPrices.minBy(_.date).open
+              val endPrice = yearPrices.maxBy(_.date).close
+              val year = LocalDate.parse(yearPrices(0).date).getYear
+              EtfYearResult(row.symbol, year, (endPrice - startPrice) / endPrice * 100)
+            })
+        )
 
-          etfProfitByYear.show()
+      val allYearsProfits = etfProfitByYear
+        .map(row => WrappedEtfYearResult(row.symbol, YearResult(row.year, row.profitPercentage)))
+        .groupBy($"symbol")
+        .agg(collect_list($"yearResult"))
+        .withColumnRenamed("symbol", "_id")
+        .withColumnRenamed("collect_list(yearResult)", "yearResults")
+        .as[EtfYearResults]
+        .map(row => EtfYearResults(row._id, row.yearResults.sortBy(_.year)))
 
-          val documents = etfProfitByYear
-            .groupBy($"symbol")
-            .avg("profitPercentage")
-            .withColumnRenamed("avg(profitPercentage)", "averageProfitPercentage")
-            .withColumnRenamed("symbol", "_id")
-            .as[EtfOverallInfo]
+      val avgProfits = etfProfitByYear
+        .groupBy($"symbol")
+        .avg("profitPercentage")
+        .withColumnRenamed("avg(profitPercentage)", "averageProfitPercentage")
 
-          MongoSpark.save(documents, WriteConfig(Map("uri" -> "mongodb://root:example@mongo:27017/etf.overall?authSource=admin")))
+      val documents = avgProfits
+        .join(allYearsProfits, avgProfits("symbol") === allYearsProfits("_id"))
+        .drop("symbol")
+        .as[EtfOverallInfo]
+
+      MongoSpark.save(documents, WriteConfig(Map("uri" -> "mongodb://root:example@mongo:27017/etf.overall?authSource=admin")))
     }
   }
 }

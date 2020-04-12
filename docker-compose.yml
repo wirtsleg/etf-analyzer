@@ -5,7 +5,7 @@ volumes:
   hadoop_datanode:
   hadoop_historyserver:
   mongo:
-  metabase:
+  metabase1:
 
 services:
   namenode:
@@ -232,7 +232,7 @@ services:
     ports:
       - 3001:3000
     volumes:
-      - metabase:/metabase-data
+      - metabase1:/metabase-data
     depends_on:
       - mongo
 
